@@ -1,0 +1,70 @@
+Cell 4 · 1. Tool definition — thứ agent thực sự nhìn thấy
+{
+  "name": "search_docs",
+  "description": "Search the internal Vietnamese technical documentation corpus. Covers cloud, ai_ml, security, database, networking, devops, mobile, frontend, backend and data_eng. Ask ONE question per call. Returns ranked document chunks with doc_id, title and score.",
+  "input_schema": {
+    "type": "object",
+    "properties": {
+      "query": {
+        "type": "string",
+        "description": "One single-intent question."
+      },
+      "topic": {
+        "type": "string",
+        "description": "Restrict to one topic cluster.",
+        "enum": [
+          "cloud",
+          "ai_ml",
+          "security",
+          "database",
+          "networking",
+          "devops",
+          "mobile",
+          "frontend",
+          "backend",
+          "data_eng"
+        ]
+      },
+      "since_year": {
+        "type": "integer",
+        "description": "Only docs publ
+
+
+Cell 8 · 2. Planner: một câu hỏi, mấy ý định?
+  call 1: {'query': 'tự động mở rộng theo lưu lượng', 'top_k': 8, 'topic': 'cloud'}
+  call 2: {'query': 'cân bằng tải giữa nhiều region', 'top_k': 8, 'topic': 'networking'}
+
+
+Cell 10 · 3. Đo: single-shot vs agentic, **cùng ngân sách truy xuất**
+strategy              recall  balance   calls       ms
+
+single-shot            0.526     0.08     1.0     19.7
+
+agentic (no filter)    0.922     0.92     2.3     35.3
+
+agentic (+filter)      0.839     0.75     2.3     65.6
+
+Δ recall vs single-shot:  tách câu +0.396   tách + filter +0.312
+
+
+Cell 11 · 3. Đo: single-shot vs agentic, **cùng ngân sách truy xuất**
+single-shot: planned slots min=16, max=16
+agentic no filter: planned slots min=16, max=16
+agentic +filter: planned slots min=16, max=16
+
+
+Cell 15 · 4. Reflection: filter tồi còn tệ hơn không filter
+filter quá chặt (since_year=2027) → 0 kết quả
+filter hợp lý                     → 8 kết quả
+
+agent phản tỉnh: 2 call → 8 doc
+    {'query': 'cân bằng tải giữa nhiều region', 'top_k': 8, 'topic': 'networking', 'since_year': 2027} → 0 kết quả
+    {'query': 'cân bằng tải giữa nhiều region', 'top_k': 8} → 8 kết quả
+
+
+Cell 17 · 5. Ghép ngữ cảnh: nơi feature store gặp vector store
+features   : {'user_id': ['u_001'], 'topic_affinity': ['cloud'], 'preferred_language': ['vi']}
+affinity   : cloud
+tool_args  : {'query': 'làm sao tối ưu chi phí hạ tầng', 'top_k': 8, 'topic': 'cloud'}
+doc_ids    : ['cloud_066', 'cloud_065', 'cloud_062', 'cloud_004', 'cloud_088'] …
+

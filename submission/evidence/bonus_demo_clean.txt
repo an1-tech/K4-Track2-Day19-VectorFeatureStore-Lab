@@ -1,0 +1,176 @@
+Materializing [1m[32m2[0m feature views from [1m[32m2026-09-05 04:55:54+00:00[0m to [1m[32m2026-10-05 04:55:56+00:00[0m into the [1m[32msqlite[0m online store.
+
+[1m[32muser_profile_features[0m:
+[1m[32mrecent_activity_features[0m:
+
+QUERY 1: Tôi đã đọc gì về Kubernetes?
+{
+  "user_id": "u_001",
+  "mode": "semantic",
+  "features": {
+    "user_id": "u_001",
+    "topic_affinity": "cloud",
+    "reading_speed_wpm": 187,
+    "preferred_language": "vi",
+    "queries_last_hour": 1,
+    "distinct_topics_24h": 1
+  },
+  "memories": [
+    {
+      "doc_id": "07381a8d-70b4-43b0-8b9e-acb344de45dc",
+      "user_id": "u_001",
+      "text": "Tôi đã đọc hướng dẫn Kubernetes: cấu hình deployment, pod và autoscaling để tự động mở rộng hạ tầng theo lưu lượng.",
+      "created_at": "2026-10-05T04:55:56.653300+00:00"
+    },
+    {
+      "doc_id": "1a27776e-03d7-40ae-a91f-3ec6916a071e",
+      "user_id": "u_001",
+      "text": "Tôi đã lưu ghi chú PostgreSQL: chỉ mục B-tree giúp tối ưu truy vấn cơ sở dữ liệu.",
+      "created_at": "2026-10-05T04:55:56.699177+00:00"
+    },
+    {
+      "doc_id": "774959d2-1fdb-46d5-8b87-1fb021da5200",
+      "user_id": "u_001",
+      "text": "Tôi quan tâm cloud security: IAM theo least privilege, mã hóa dữ liệu và giới hạn quyền truy cập tài liệu.",
+      "created_at": "2026-10-05T04:55:56.667214+00:00"
+    }
+  ]
+}
+
+QUERY 2: Recommend đọc gì tiếp
+{
+  "user_id": "u_001",
+  "mode": "hybrid",
+  "features": {
+    "user_id": "u_001",
+    "topic_affinity": "cloud",
+    "reading_speed_wpm": 187,
+    "preferred_language": "vi",
+    "queries_last_hour": 2,
+    "distinct_topics_24h": 2
+  },
+  "memories": [
+    {
+      "doc_id": "b81dce37-1460-4e77-b522-8181c7175fd4",
+      "user_id": "u_001",
+      "text": "Gần đây tôi đọc về CDN và cân bằng tải giữa nhiều region để giảm độ trễ.",
+      "created_at": "2026-10-05T04:55:56.686746+00:00"
+    },
+    {
+      "doc_id": "07381a8d-70b4-43b0-8b9e-acb344de45dc",
+      "user_id": "u_001",
+      "text": "Tôi đã đọc hướng dẫn Kubernetes: cấu hình deployment, pod và autoscaling để tự động mở rộng hạ tầng theo lưu lượng.",
+      "created_at": "2026-10-05T04:55:56.653300+00:00"
+    },
+    {
+      "doc_id": "1a27776e-03d7-40ae-a91f-3ec6916a071e",
+      "user_id": "u_001",
+      "text": "Tôi đã lưu ghi chú PostgreSQL: chỉ mục B-tree giúp tối ưu truy vấn cơ sở dữ liệu.",
+      "created_at": "2026-10-05T04:55:56.699177+00:00"
+    }
+  ]
+}
+
+QUERY 3: Tôi đang quan tâm gì gần đây?
+{
+  "user_id": "u_001",
+  "mode": "hybrid",
+  "features": {
+    "user_id": "u_001",
+    "topic_affinity": "cloud",
+    "reading_speed_wpm": 187,
+    "preferred_language": "vi",
+    "queries_last_hour": 3,
+    "distinct_topics_24h": 2
+  },
+  "memories": [
+    {
+      "doc_id": "b81dce37-1460-4e77-b522-8181c7175fd4",
+      "user_id": "u_001",
+      "text": "Gần đây tôi đọc về CDN và cân bằng tải giữa nhiều region để giảm độ trễ.",
+      "created_at": "2026-10-05T04:55:56.686746+00:00"
+    },
+    {
+      "doc_id": "1a27776e-03d7-40ae-a91f-3ec6916a071e",
+      "user_id": "u_001",
+      "text": "Tôi đã lưu ghi chú PostgreSQL: chỉ mục B-tree giúp tối ưu truy vấn cơ sở dữ liệu.",
+      "created_at": "2026-10-05T04:55:56.699177+00:00"
+    },
+    {
+      "doc_id": "774959d2-1fdb-46d5-8b87-1fb021da5200",
+      "user_id": "u_001",
+      "text": "Tôi quan tâm cloud security: IAM theo least privilege, mã hóa dữ liệu và giới hạn quyền truy cập tài liệu.",
+      "created_at": "2026-10-05T04:55:56.667214+00:00"
+    }
+  ]
+}
+
+QUERY 4: Tài liệu về tự động mở rộng hạ tầng?
+{
+  "user_id": "u_001",
+  "mode": "semantic",
+  "features": {
+    "user_id": "u_001",
+    "topic_affinity": "cloud",
+    "reading_speed_wpm": 187,
+    "preferred_language": "vi",
+    "queries_last_hour": 4,
+    "distinct_topics_24h": 2
+  },
+  "memories": [
+    {
+      "doc_id": "b0bb35fb-1f46-42c8-ae61-26a330d7b4ad",
+      "user_id": "u_001",
+      "text": "Tài liệu tối ưu chi phí cloud giới thiệu spot instance, ngân sách và theo dõi mức sử dụng tài nguyên.",
+      "created_at": "2026-10-05T04:55:56.677229+00:00"
+    },
+    {
+      "doc_id": "b81dce37-1460-4e77-b522-8181c7175fd4",
+      "user_id": "u_001",
+      "text": "Gần đây tôi đọc về CDN và cân bằng tải giữa nhiều region để giảm độ trễ.",
+      "created_at": "2026-10-05T04:55:56.686746+00:00"
+    },
+    {
+      "doc_id": "07381a8d-70b4-43b0-8b9e-acb344de45dc",
+      "user_id": "u_001",
+      "text": "Tôi đã đọc hướng dẫn Kubernetes: cấu hình deployment, pod và autoscaling để tự động mở rộng hạ tầng theo lưu lượng.",
+      "created_at": "2026-10-05T04:55:56.653300+00:00"
+    }
+  ]
+}
+
+QUERY 5: Cho tôi summary cloud security
+{
+  "user_id": "u_001",
+  "mode": "hybrid",
+  "features": {
+    "user_id": "u_001",
+    "topic_affinity": "cloud",
+    "reading_speed_wpm": 187,
+    "preferred_language": "vi",
+    "queries_last_hour": 5,
+    "distinct_topics_24h": 2
+  },
+  "memories": [
+    {
+      "doc_id": "774959d2-1fdb-46d5-8b87-1fb021da5200",
+      "user_id": "u_001",
+      "text": "Tôi quan tâm cloud security: IAM theo least privilege, mã hóa dữ liệu và giới hạn quyền truy cập tài liệu.",
+      "created_at": "2026-10-05T04:55:56.667214+00:00"
+    },
+    {
+      "doc_id": "b0bb35fb-1f46-42c8-ae61-26a330d7b4ad",
+      "user_id": "u_001",
+      "text": "Tài liệu tối ưu chi phí cloud giới thiệu spot instance, ngân sách và theo dõi mức sử dụng tài nguyên.",
+      "created_at": "2026-10-05T04:55:56.677229+00:00"
+    },
+    {
+      "doc_id": "07381a8d-70b4-43b0-8b9e-acb344de45dc",
+      "user_id": "u_001",
+      "text": "Tôi đã đọc hướng dẫn Kubernetes: cấu hình deployment, pod và autoscaling để tự động mở rộng hạ tầng theo lưu lượng.",
+      "created_at": "2026-10-05T04:55:56.653300+00:00"
+    }
+  ]
+}
+
+PASS: 5 contexts, fresh Feast activity and no cross-user memories

@@ -1,0 +1,8 @@
+.................................................                        [100%]
+============================== warnings summary ===============================
+..\..\..\.day19-clean-venv\Lib\site-packages\feast\type_map.py:72
+  D:\Track2_AI_Data_Infrastructure\.day19-clean-venv\Lib\site-packages\feast\type_map.py:72: DeprecationWarning: The 'generic' unit for NumPy timedelta is deprecated, and will raise an error in the future. This includes implicit conversion of bare integers (e.g. `+ 1`). Please use a specific unit instead.
+    NULL_TIMESTAMP_INT_VALUE: int = np.datetime64("NaT").astype(int)
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+49 passed, 1 warning in 10.43s

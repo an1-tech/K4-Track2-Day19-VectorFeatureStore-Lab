@@ -72,7 +72,8 @@ for i, args in enumerate(planner.plan(demo_q), 1):
 #
 # Đây là chỗ dễ đo gian lận nhất. Nếu agent được lấy 32 doc còn single-shot chỉ
 # 16, agent thắng vì *ngân sách*, không phải vì *chiến lược*. Ở đây cả hai đều
-# lấy đúng **16 document** — chỉ khác cách chia.
+# có đúng **16 candidate slots** trong kế hoạch ban đầu — chỉ khác cách chia.
+# Số doc duy nhất có thể nhỏ hơn 16 do trùng lặp; retry được báo cáo bằng `calls`.
 #
 # Ngoài `recall`, ta đo thêm **`balance`**: trong 16 doc lấy về, hai vế của câu
 # hỏi được phủ đều đến đâu (1.00 = đều hoàn hảo, 0.00 = bỏ hẳn một vế).
@@ -80,6 +81,7 @@ for i, args in enumerate(planner.plan(demo_q), 1):
 # %%
 queries = [json.loads(l) for l in (DATA / "agent_queries.jsonl").open(encoding="utf-8")]
 BUDGET = 16
+strategy_results = {}
 
 
 def evaluate(agent, label):
@@ -93,7 +95,9 @@ def evaluate(agent, label):
         calls.append(r.n_calls)
         ms.append(r.latency_ms)
     n = len(queries)
-    print(f"{label:<14}{sum(rec)/n:8.3f}{sum(bal)/n:9.2f}{sum(calls)/n:8.1f}{sum(ms)/n:9.1f}")
+    strategy_results[label] = {"recall": sum(rec)/n, "balance": sum(bal)/n,
+                               "calls": sum(calls)/n, "latency_ms": sum(ms)/n}
+    print(f"{label:<20}{sum(rec)/n:8.3f}{sum(bal)/n:9.2f}{sum(calls)/n:8.1f}{sum(ms)/n:9.1f}")
     return sum(rec) / n
 
 
@@ -104,6 +108,29 @@ split = evaluate(Agent(tool, RuleBasedPlanner(budget=BUDGET, use_filters=False))
 filt = evaluate(Agent(tool, RuleBasedPlanner(budget=BUDGET, use_filters=True)),
                 "agentic (+filter)")
 print(f"\nΔ recall vs single-shot:  tách câu {split - base:+.3f}   tách + filter {filt - base:+.3f}")
+
+# %%
+for label, strategy in [
+    ("single-shot", SingleShotPlanner(budget=BUDGET)),
+    ("agentic no filter", RuleBasedPlanner(budget=BUDGET, use_filters=False)),
+    ("agentic +filter", RuleBasedPlanner(budget=BUDGET, use_filters=True)),
+]:
+    planned_slots = [sum(a.top_k for a in strategy.plan(q["question"])) for q in queries]
+    assert all(slots == BUDGET for slots in planned_slots)
+    print(f"{label}: planned slots min={min(planned_slots)}, max={max(planned_slots)}")
+assert strategy_results["agentic (no filter)"]["recall"] > strategy_results["single-shot"]["recall"]
+assert strategy_results["agentic (no filter)"]["balance"] > strategy_results["single-shot"]["balance"]
+
+# %% [markdown]
+# ### Giải thích filter và ngân sách
+# Topic được suy ra bằng keyword là một phỏng đoán. Nó có thể loại document gần
+# về ngữ nghĩa nhưng gắn topic khác, nên `agentic (+filter)` có recall thấp hơn
+# `agentic (no filter)`. Ground truth ở đây là cosine top-8 của mỗi câu con trên
+# toàn corpus, không giới hạn topic: kết quả này đo khả năng khôi phục nearest
+# neighbours, chưa chứng minh chất lượng câu trả lời LLM. Mỗi kế hoạch dùng 16
+# slots, chia phần dư cho các câu con; de-duplicate có thể làm context nhỏ hơn.
+# Reflection dùng thêm call khi thiếu evidence, nên cần đọc cả cột calls/ms.
+# Planner rule-based còn có thể tách sai từ nối bên trong một ý ("dev và prod").
 
 # %% [markdown]
 # **Đọc kết quả.** `balance` của single-shot rất thấp: nó gần như chỉ lấy *một*
@@ -119,7 +146,8 @@ print(f"\nΔ recall vs single-shot:  tách câu {split - base:+.3f}   tách + fi
 #
 # **Và hãy so hai dòng agentic với nhau.** Bật filter suy đoán làm *giảm* recall
 # so với chỉ tách câu — vì topic đoán từ keyword loại bỏ luôn những document liên
-# quan nằm ở cụm bên cạnh. Đổi lại, nó tốn ít call hơn. Đây đúng là bài học của
+# quan nằm ở cụm bên cạnh. Trong lần chạy này hai chiến lược có cùng số call
+# trung bình; cần đo chi phí thay vì giả định filter luôn giảm call. Đây là bài học của
 # NB5 lặp lại ở tầng agent: **filter không miễn phí, phải đo chứ đừng đoán.**
 
 # %% [markdown]

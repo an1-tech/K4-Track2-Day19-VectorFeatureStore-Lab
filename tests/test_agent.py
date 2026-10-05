@@ -40,6 +40,16 @@ def test_use_filters_false_emits_no_filters():
     assert all(a.topic is None and a.since_year is None for a in plan)
 
 
+def test_three_parts_receive_the_entire_budget():
+    plan = RuleBasedPlanner(budget=16).plan("cloud và database và security")
+    assert [a.top_k for a in plan] == [6, 5, 5]
+
+
+def test_more_parts_than_slots_do_not_exceed_budget():
+    plan = RuleBasedPlanner(budget=2).plan("cloud và database và security")
+    assert sum(a.top_k for a in plan) == 2
+
+
 def test_agent_relaxes_a_starving_filter(index):
     tool = RetrievalTool(index)
 

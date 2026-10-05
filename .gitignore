@@ -37,3 +37,12 @@ data/agent_queries.jsonl
 app/feast_repo_ondemand/data/
 app/feast_repo_ondemand/registry.db
 app/feast_repo_ondemand/online_store.db
+
+# Bonus runtime artifacts (demo regenerates these).
+bonus/feast_repo/data/
+bonus/feast_repo/registry.db
+bonus/feast_repo/online_store.db
+bonus/feast_repo/online_store.db-*
+
+# Isolated validation workspace and virtual environment.
+.validation/

@@ -1,0 +1,101 @@
+<!doctype html><html lang="vi"><meta charset="utf-8"><title>08_feature_engineering</title><style>
+body{margin:0;background:#eef2f6;color:#172b43;font-family:Segoe UI,Arial,sans-serif}
+main{max-width:1080px;margin:24px auto;padding:24px;background:white;border-radius:10px}
+h1{font-size:26px;margin:0 0 12px}h2{font-size:18px;margin-top:24px}
+p{color:#516276;line-height:1.6}pre{font:14px/1.5 Consolas,monospace;white-space:pre-wrap;
+overflow-wrap:anywhere;background:#f5f7fa;border:1px solid #dce3eb;padding:14px;border-radius:6px}
+.provenance{font-size:12px}code{overflow-wrap:anywhere}
+</style><main><h1>08_feature_engineering</h1><p>Output thật từ <code>08_feature_engineering.ipynb</code>, được xuất sau khi chạy notebook. Đây là trang bằng chứng được render, không phải ảnh giao diện Jupyter.</p><p class="provenance">SHA-256: <code>d62a8d3e7d649f4f70e311f67e57eb68af224418d5c6b092a312cbcfb0e40de7</code></p><h2>Cell 4 · 1. Event log</h2><pre>events   : 9019
+users    : 200
+sessions : 8141  (~1.1 event/session)
+click rate: 0.569
+
+  user_id                     event_timestamp       topic  session_id  \
+0   u_048 2026-07-01 00:00:34.132897690+00:00  networking  s_048_0000   
+1   u_080 2026-07-01 00:02:11.225255095+00:00    data_eng  s_080_0000   
+2   u_093 2026-07-01 00:04:41.999966662+00:00       cloud  s_093_0000   
+
+   query_len  results_shown  clicked  
+0         10             15        0  
+1         23             12        0  
+2         16             13        1  </pre><h2>Cell 6 · 2. Bốn họ đầu — tính **nhân quả**</h2><pre>      searches_1h  searches_24h  searches_7d  query_len_vs_user_avg  query_len_delta  seconds_since_last
+mean         0.07          1.69        10.66                   1.03            -0.01            55695.74
+50%          0.00          1.00        11.00                   1.01             0.00            34931.18
+max          2.00         10.00        31.00                   8.00            21.00           888567.46
+</pre><h2>Cell 8 · 3. Feature trung thực trông như thế nào?</h2><pre>feature                      train  holdout     gap
+searches_24h                 0.592    0.580  +0.012
+searches_7d                  0.646    0.666  -0.020
+seconds_since_last           0.435    0.435  +0.000
+</pre><h2>Cell 10 · 4. Rò rỉ #1 — target encoding</h2><pre>── key = session_id (cardinality rất cao, ~1 event/nhóm) ──
+      encoding  train_auc  test_auc    gap
+     frequency      0.521     0.516  0.005
+  target-naive      0.999     0.522  0.477
+target-in-fold      0.519     0.522 -0.003
+
+── key = user_id (cardinality thấp hơn, ~45 event/nhóm) ──
+      encoding  train_auc  test_auc   gap
+     frequency      0.726     0.708 0.018
+  target-naive      0.749     0.698 0.052
+target-in-fold      0.714     0.698 0.016
+</pre><h2>Cell 13 · 5. Rò rỉ #2 — join &quot;giá trị mới nhất&quot; thay vì point-in-time</h2><pre>training rows                    : 3535
+dòng bị rò (giá trị ghi SAU nhãn): 98.2%
+
+AUC với latest-value join        : 0.715   ← dùng tương lai
+AUC với point-in-time join       : 0.595   ← phục vụ được thật
+
+&#x27;lift ảo&#x27; sẽ mất khi lên production: +0.120 AUC
+</pre><h2>Cell 16 · 6. On-demand feature: công thức không thể materialize</h2><pre>wrote D:\Track2_AI_Data_Infrastructure\K4-Track2-Day19-VectorFeatureStore-Lab\app\feast_repo_ondemand\data\user_spend.parquet (150 rows, 50 users)
+
+
+No project found in the repository. Using project name lab19_odfv defined in feature_store.yaml
+Applying changes for project lab19_odfv
+Updated feature view user_spend_stats
+	batch_source: type: BATCH_FILE
+timestamp_field: &quot;event_timestamp&quot;
+file_options {
+  uri: &quot;D:\\Track2_AI_Data_Infrastructure\\K4-Track2-Day19-VectorFeatureStore-Lab\\app\\feast_repo_ondemand\\data\\user_spend.parquet&quot;
+}
+data_source_class_type: &quot;feast.infra.offline_stores.file_source.FileSource&quot;
+name: &quot;user_spend_source&quot;
+meta {
+  created_timestamp {
+    seconds: 1791174548
+    nanos: 133493000
+  }
+  last_updated_timestamp {
+    seconds: 1791174548
+    nanos: 193591000
+  }
+}
+ -&gt; type: BATCH_FILE
+timestamp_field: &quot;event_timestamp&quot;
+file_options {
+  uri: &quot;D:\\Track2_AI_Data_Infrastructure\\K4-Track2-Day19-VectorFeatureStore-Lab\\app\\feast_repo_ondemand\\data\\user_spend.parquet&quot;
+}
+data_source_class_type: &quot;feast.infra.offline_stores.file_source.FileSource&quot;
+name: &quot;user_spend_source&quot;
+meta {
+  created_timestamp {
+    seconds: 1791175547
+    nanos: 920294000
+  }
+  last_updated_timestamp {
+    seconds: 1791175547
+    nanos: 920294000
+  }
+}
+
+
+No changes to infrastructure
+
+
+Materializing 1 feature views to 2026-10-05 04:45:42+00:00 into the sqlite online store.
+
+user_spend_stats from 2026-10-05 04:29:03+00:00 to 2026-10-05 04:45:42+00:00:
+
+feast apply + materialize OK
+</pre><h2>Cell 17 · 6. On-demand feature: công thức không thể materialize</h2><pre>user=u_000  avg7d=   3,566,076  ratio=  0.03  spike=0
+user=u_000  avg7d=   3,566,076  ratio=  4.21  spike=1
+user=u_001  avg7d=   3,718,992  ratio=  0.07  spike=0
+</pre><h2>Cell 21 · Diễn giải và giới hạn</h2><pre>PASS: high-cardinality leakage, in-fold control and request-dependent ODFV
+</pre></main></html>

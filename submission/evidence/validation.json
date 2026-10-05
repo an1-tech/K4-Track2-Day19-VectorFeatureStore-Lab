@@ -1,0 +1,39 @@
+{
+  "python": "3.12.10",
+  "platform": "Windows-11-10.0.26300-SP0",
+  "scope": "fresh virtual environment and project copy on the same Windows machine; embedding cache reused",
+  "steps": [
+    {
+      "name": "clean_install",
+      "exit_code": 0
+    },
+    {
+      "name": "dependency_check",
+      "exit_code": 0
+    },
+    {
+      "name": "seed_corpus",
+      "exit_code": 0
+    },
+    {
+      "name": "gen_agent_queries",
+      "exit_code": 0
+    },
+    {
+      "name": "gen_spend",
+      "exit_code": 0
+    },
+    {
+      "name": "tests_clean",
+      "exit_code": 0
+    },
+    {
+      "name": "verify_lite_clean",
+      "exit_code": 0
+    },
+    {
+      "name": "bonus_demo_clean",
+      "exit_code": 0
+    }
+  ]
+}

@@ -73,11 +73,13 @@ cases = [
     ("acme AND ≥2026",  *combo_filter("acme", 20260101)),
 ]
 
-print(f"{'filter':<18}{'sel%':>7}{'post':>8}{'fANN':>8}{'post_ms':>9}{'fann_ms':>9}")
+print(f"{'filter':<18}{'sel%':>7}{'pre':>8}{'post':>8}{'fANN':>8}"
+      f"{'pre_ms':>9}{'post_ms':>9}{'fann_ms':>9}")
 rows = []
 for name, pred, qf in cases:
     sel = selectivity(index.docs, pred) * 100
-    truth = index.pre_filter(QUERY, pred, k=10).doc_ids
+    pre = index.pre_filter(QUERY, pred, k=10)
+    truth = pre.doc_ids
     post = index.post_filter(QUERY, pred, k=10, fetch_k=10)
     if qf is None:
         fann_r, fann_ms = 1.0, float("nan")
@@ -85,8 +87,8 @@ for name, pred, qf in cases:
         f = index.filtered_ann(QUERY, qf, k=10)
         fann_r, fann_ms = f.recall_against(truth), f.latency_ms
     rows.append((name, sel, post.recall_against(truth), fann_r))
-    print(f"{name:<18}{sel:7.1f}{post.recall_against(truth):8.2f}{fann_r:8.2f}"
-          f"{post.latency_ms:9.1f}{fann_ms:9.1f}")
+    print(f"{name:<18}{sel:7.1f}{1.0:8.2f}{post.recall_against(truth):8.2f}{fann_r:8.2f}"
+          f"{pre.latency_ms:9.1f}{post.latency_ms:9.1f}{fann_ms:9.1f}")
 
 # %% [markdown]
 # **Đọc bảng:** filter càng chặt (`sel%` càng nhỏ), post-filter càng sập. Ở
@@ -108,19 +110,19 @@ QUERIES = [QUERY, "bảo mật xác thực người dùng", "mô hình ngôn ng�
 truths = {q: index.pre_filter(q, pred, k=10).doc_ids for q in QUERIES}
 
 print(f"selectivity = {selectivity(index.docs, pred)*100:.1f}%  của 1000 doc\n")
-print(f"{'fetch_k':>9}{'recall':>9}{'% corpus quét':>16}")
+print(f"{'fetch_k':>9}{'recall':>9}{'% corpus yêu cầu':>20}")
 for fk in (10, 50, 200, 500, 1000):
     r = sum(index.post_filter(q, pred, k=10, fetch_k=fk).recall_against(truths[q])
             for q in QUERIES) / len(QUERIES)
-    print(f"{fk:>9}{r:9.2f}{fk/len(index.docs)*100:15.0f}%")
+    print(f"{fk:>9}{r:9.2f}{fk/len(index.docs)*100:19.0f}%")
 
 r = sum(index.filtered_ann(q, qf, k=10).recall_against(truths[q]) for q in QUERIES) / len(QUERIES)
-print(f"{'fANN':>9}{r:9.2f}{10/len(index.docs)*100:15.0f}%")
+print(f"{'fANN':>9}{r:9.2f}{'N/A (10 hits)':>20}")
 
 # %% [markdown]
 # Recall quay lại 1.00 — nhưng chỉ khi `fetch_k` ≈ **một nửa corpus**. Lúc đó
-# bạn đã bỏ index và đang làm brute-force với các bước thừa. filtered-ANN đạt
-# đúng kết quả đó khi chỉ lấy 10.
+# danh sách ứng viên đã lớn so với corpus. Filtered search trả lại đúng top-10;
+# số hits trả về không cho biết engine đã duyệt bao nhiêu vector.
 #
 # > **Lưu ý về môi trường lab:** Qdrant chạy in-memory (local mode) *lọc đúng*
 # > nhưng bỏ qua payload index, nên cột latency ở đây chỉ mang tính minh hoạ.
@@ -161,3 +163,20 @@ for tenant in ("acme", "globex", "initech"):
 # ổn. Ground truth đúng phải là "top-K chính xác **trong subset khớp filter**".
 # Nếu bạn để AI tự chọn baseline, nó thường chọn cái tiện chứ không phải cái đúng,
 # và cả bài đo trở thành vô nghĩa. Tự viết `exact_top_k()` và tự kiểm tra nó.
+
+# %% [markdown]
+# ## Kết luận và giới hạn phép đo
+# Ở filter `acme AND >=2026`, chỉ 3,8% corpus khớp: top-10 toàn corpus rồi lọc
+# sau không giữ được ground truth; over-fetch 500 ứng viên phục hồi recall trên
+# ba query thử nghiệm. Ground truth là cosine chính xác trong subset đã lọc.
+# Dòng fANN lấy về 10 kết quả, không chứng minh engine chỉ duyệt 1% corpus.
+# Local Qdrant bỏ qua payload index và làm exact search, nên recall 1,00 là
+# bằng chứng tính đúng của filter trong lab, không phải bảo đảm ANN server luôn
+# đạt recall 1,00 hay benchmark tốc độ HNSW production.
+
+# %%
+assert len(index.docs) == 1000
+assert rows[-1][1] < 5.0
+assert rows[-1][2] < rows[-1][3]
+assert all(abs(row[3] - 1.0) < 1e-9 for row in rows)
+print("PASS: selective post-filter loses recall; local filtered search matches ground truth")

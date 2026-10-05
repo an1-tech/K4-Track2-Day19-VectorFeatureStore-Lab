@@ -28,7 +28,10 @@
 # %%
 import _setup  # noqa: F401
 import subprocess
+import sys
+import os
 import warnings
+from datetime import datetime, timezone
 from pathlib import Path
 
 warnings.filterwarnings("ignore")
@@ -158,11 +161,19 @@ print(f"\n'lift ảo' sẽ mất khi lên production: {auc_lat - auc_pit:+.3f} A
 
 # %%
 repo = ROOT / "app" / "feast_repo_ondemand"
-subprocess.run(["python", str(ROOT / "scripts" / "gen_spend.py")], check=True,
-               capture_output=True)
-subprocess.run(["feast", "apply"], cwd=repo, check=True, capture_output=True)
-subprocess.run(["feast", "materialize-incremental", "2027-01-01T00:00:00"],
-               cwd=repo, check=True, capture_output=True)
+feast_cli = str(Path(sys.executable).parent / ("feast.exe" if os.name == "nt" else "feast"))
+end_time = datetime.now(timezone.utc).isoformat()
+for command, cwd in [
+    ([sys.executable, str(ROOT / "scripts" / "gen_spend.py")], ROOT),
+    ([feast_cli, "apply"], repo),
+    ([feast_cli, "materialize-incremental", end_time], repo),
+]:
+    result = subprocess.run(command, cwd=cwd, capture_output=True,
+                            text=True, encoding="utf-8", errors="replace")
+    print(result.stdout)
+    if result.returncode:
+        print(result.stderr)
+    result.check_returncode()
 print("feast apply + materialize OK")
 
 # %%
@@ -209,3 +220,23 @@ for i in range(3):
 # encoding an toàn. Cùng một lỗi thứ-tự đó, khi xảy ra trong pipeline thật, tạo
 # ra model 0.99 AUC offline và vô dụng online. Tự viết thứ tự: **split → fit
 # encoder trên train → transform cả hai**.
+
+# %% [markdown]
+# ## Diễn giải và giới hạn
+# Session gần như chỉ có một event, nên target-naive đưa nhãn của chính dòng
+# vào feature: train AUC cao không thể tái lập trên holdout. In-fold loại sự
+# đóng góp trực tiếp đó. Latest join lấy tổng hoạt động cuối kỳ cho nhãn đầu kỳ,
+# nên % dòng dùng tương lai và AUC được báo cáo cùng nhau. PIT xử lý event time;
+# pipeline thật còn phải kiểm soát availability time, backfill và late arrivals.
+# Hai giao dịch của u_000 dùng chung avg7d nhưng có ratio/spike khác nhau: amount
+# của request chỉ biết lúc serving, nên được tính bằng ODFV. End time materialize
+# dùng UTC hiện tại để notebook tái chạy được, không phụ thuộc mốc 2027 cố định.
+
+# %%
+session_metrics = leakage_experiment(events, "session_id").set_index("encoding")
+assert session_metrics.loc["target-naive", "gap"] > 0.30
+assert abs(session_metrics.loc["target-in-fold", "gap"]) < 0.10
+assert len(out["amount_vs_avg"]) == 3
+assert out["user_id"][0] == out["user_id"][1]
+assert out["amount_vs_avg"][0] != out["amount_vs_avg"][1]
+print("PASS: high-cardinality leakage, in-fold control and request-dependent ODFV")

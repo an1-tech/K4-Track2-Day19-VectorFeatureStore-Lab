@@ -1,0 +1,41 @@
+Cell 4 · 1. Xây index có metadata
+docs: 1000   vectors: (1000, 384)
+payload mẫu: {'doc_id': 'frontend_074', 'topic': 'frontend', 'tenant': 'globex', 'access': 'public', 'published': '2023-11-04'}
+
+
+Cell 6 · 2. Recall cliff theo độ chọn lọc của filter
+filter               sel%     pre    post    fANN   pre_ms  post_ms  fann_ms
+không filter        100.0    1.00    1.00    1.00     29.0      3.0      nan
+access=internal      23.6    1.00    0.20    1.00      0.5      3.0     28.6
+
+tenant=acme          31.9    1.00    0.20    1.00      1.0      8.0     27.7
+published ≥ 2026     13.5    1.00    0.20    1.00      0.5      3.5     27.7
+acme AND ≥2026        3.8    1.00    0.00    1.00      0.6      4.1     21.8
+
+
+Cell 9 · 3. "Cứ lấy nhiều hơn thì sao?" — mua lại recall bằng over-fetch
+selectivity = 3.8%  của 1000 doc
+
+  fetch_k   recall    % corpus yêu cầu
+       10     0.03                  1%
+
+       50     0.27                  5%
+
+      200     0.80                 20%
+      500     1.00                 50%
+
+     1000     1.00                100%
+
+     fANN     1.00       N/A (10 hits)
+
+
+Cell 12 · 4. Bài test bắt buộc trước khi lên production
+tenant=acme      sel= 31.9%  post=0.20  fANN=1.00
+tenant=globex    sel= 34.7%  post=0.60  fANN=1.00
+
+tenant=initech   sel= 33.4%  post=0.20  fANN=1.00
+
+
+Cell 15 · Kết luận và giới hạn phép đo
+PASS: selective post-filter loses recall; local filtered search matches ground truth
+

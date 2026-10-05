@@ -1,0 +1,5 @@
+D:\Track2_AI_Data_Infrastructure\K4-Track2-Day19-VectorFeatureStore-Lab\.validation\clean_workspace\scripts\gen_spend.py:25: DeprecationWarning: The 'generic' unit for NumPy timedelta is deprecated, and will raise an error in the future. This includes implicit conversion of bare integers (e.g. `+ 1`). Please use a specific unit instead.
+  "event_timestamp": now - pd.Timedelta(f"{days_ago}D"),
+D:\Track2_AI_Data_Infrastructure\K4-Track2-Day19-VectorFeatureStore-Lab\.validation\clean_workspace\scripts\gen_spend.py:28: DeprecationWarning: The 'generic' unit for NumPy timedelta is deprecated, and will raise an error in the future. This includes implicit conversion of bare integers (e.g. `+ 1`). Please use a specific unit instead.
+  "created": now - pd.Timedelta(f"{days_ago}D"),
+wrote D:\Track2_AI_Data_Infrastructure\K4-Track2-Day19-VectorFeatureStore-Lab\.validation\clean_workspace\app\feast_repo_ondemand\data\user_spend.parquet (150 rows, 50 users)

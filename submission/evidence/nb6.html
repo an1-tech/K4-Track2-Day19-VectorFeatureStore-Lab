@@ -1,0 +1,61 @@
+<!doctype html><html lang="vi"><meta charset="utf-8"><title>06_agent_retrieval</title><style>
+body{margin:0;background:#eef2f6;color:#172b43;font-family:Segoe UI,Arial,sans-serif}
+main{max-width:1080px;margin:24px auto;padding:24px;background:white;border-radius:10px}
+h1{font-size:26px;margin:0 0 12px}h2{font-size:18px;margin-top:24px}
+p{color:#516276;line-height:1.6}pre{font:14px/1.5 Consolas,monospace;white-space:pre-wrap;
+overflow-wrap:anywhere;background:#f5f7fa;border:1px solid #dce3eb;padding:14px;border-radius:6px}
+.provenance{font-size:12px}code{overflow-wrap:anywhere}
+</style><main><h1>06_agent_retrieval</h1><p>Output thật từ <code>06_agent_retrieval.ipynb</code>, được xuất sau khi chạy notebook. Đây là trang bằng chứng được render, không phải ảnh giao diện Jupyter.</p><p class="provenance">SHA-256: <code>f884977c6379254d713a9797b2bc6df5704a7a464cd89f7125d2c05dc2b78ca3</code></p><h2>Cell 4 · 1. Tool definition — thứ agent thực sự nhìn thấy</h2><pre>{
+  &quot;name&quot;: &quot;search_docs&quot;,
+  &quot;description&quot;: &quot;Search the internal Vietnamese technical documentation corpus. Covers cloud, ai_ml, security, database, networking, devops, mobile, frontend, backend and data_eng. Ask ONE question per call. Returns ranked document chunks with doc_id, title and score.&quot;,
+  &quot;input_schema&quot;: {
+    &quot;type&quot;: &quot;object&quot;,
+    &quot;properties&quot;: {
+      &quot;query&quot;: {
+        &quot;type&quot;: &quot;string&quot;,
+        &quot;description&quot;: &quot;One single-intent question.&quot;
+      },
+      &quot;topic&quot;: {
+        &quot;type&quot;: &quot;string&quot;,
+        &quot;description&quot;: &quot;Restrict to one topic cluster.&quot;,
+        &quot;enum&quot;: [
+          &quot;cloud&quot;,
+          &quot;ai_ml&quot;,
+          &quot;security&quot;,
+          &quot;database&quot;,
+          &quot;networking&quot;,
+          &quot;devops&quot;,
+          &quot;mobile&quot;,
+          &quot;frontend&quot;,
+          &quot;backend&quot;,
+          &quot;data_eng&quot;
+        ]
+      },
+      &quot;since_year&quot;: {
+        &quot;type&quot;: &quot;integer&quot;,
+        &quot;description&quot;: &quot;Only docs publ
+</pre><h2>Cell 8 · 2. Planner: một câu hỏi, mấy ý định?</h2><pre>  call 1: {&#x27;query&#x27;: &#x27;tự động mở rộng theo lưu lượng&#x27;, &#x27;top_k&#x27;: 8, &#x27;topic&#x27;: &#x27;cloud&#x27;}
+  call 2: {&#x27;query&#x27;: &#x27;cân bằng tải giữa nhiều region&#x27;, &#x27;top_k&#x27;: 8, &#x27;topic&#x27;: &#x27;networking&#x27;}
+</pre><h2>Cell 10 · 3. Đo: single-shot vs agentic, **cùng ngân sách truy xuất**</h2><pre>strategy              recall  balance   calls       ms
+
+single-shot            0.526     0.08     1.0     19.7
+
+agentic (no filter)    0.922     0.92     2.3     35.3
+
+agentic (+filter)      0.839     0.75     2.3     65.6
+
+Δ recall vs single-shot:  tách câu +0.396   tách + filter +0.312
+</pre><h2>Cell 11 · 3. Đo: single-shot vs agentic, **cùng ngân sách truy xuất**</h2><pre>single-shot: planned slots min=16, max=16
+agentic no filter: planned slots min=16, max=16
+agentic +filter: planned slots min=16, max=16
+</pre><h2>Cell 15 · 4. Reflection: filter tồi còn tệ hơn không filter</h2><pre>filter quá chặt (since_year=2027) → 0 kết quả
+filter hợp lý                     → 8 kết quả
+
+agent phản tỉnh: 2 call → 8 doc
+    {&#x27;query&#x27;: &#x27;cân bằng tải giữa nhiều region&#x27;, &#x27;top_k&#x27;: 8, &#x27;topic&#x27;: &#x27;networking&#x27;, &#x27;since_year&#x27;: 2027} → 0 kết quả
+    {&#x27;query&#x27;: &#x27;cân bằng tải giữa nhiều region&#x27;, &#x27;top_k&#x27;: 8} → 8 kết quả
+</pre><h2>Cell 17 · 5. Ghép ngữ cảnh: nơi feature store gặp vector store</h2><pre>features   : {&#x27;user_id&#x27;: [&#x27;u_001&#x27;], &#x27;topic_affinity&#x27;: [&#x27;cloud&#x27;], &#x27;preferred_language&#x27;: [&#x27;vi&#x27;]}
+affinity   : cloud
+tool_args  : {&#x27;query&#x27;: &#x27;làm sao tối ưu chi phí hạ tầng&#x27;, &#x27;top_k&#x27;: 8, &#x27;topic&#x27;: &#x27;cloud&#x27;}
+doc_ids    : [&#x27;cloud_066&#x27;, &#x27;cloud_065&#x27;, &#x27;cloud_062&#x27;, &#x27;cloud_004&#x27;, &#x27;cloud_088&#x27;] …
+</pre></main></html>

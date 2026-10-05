@@ -100,9 +100,11 @@ for g in cold:
 
 print(f"cache: {len(warm)} câu   probe: {len(positives)} positive / {len(negatives)} negative\n")
 print(f"{'ngưỡng':>8}{'tiết kiệm':>12}{'trả lời sai':>14}   {'':<4}")
+sweep_rows = []
 for th in (0.60, 0.70, 0.75, 0.80, 0.85, 0.90, 0.95):
     saved = sum(1 for sc, ok in positives if sc >= th and ok) / len(positives)
     wrong = sum(1 for sc in negatives if sc >= th) / len(negatives)
+    sweep_rows.append({"threshold": th, "saved": saved, "wrong": wrong})
     flag = "NGUY HIỂM" if wrong > 0.20 else ("quá chặt" if saved < 0.80 else "cân bằng")
     print(f"{th:>8.2f}{saved:>12.0%}{wrong:>14.0%}   {flag}")
 
@@ -174,7 +176,7 @@ print("\nnamespaced=True  → GLOBEX nhận được:", blocked.answer if blocke
 # ## Deliverable evidence
 #
 # 1. §2: bảng sweep ngưỡng với hit rate và false-hit rate.
-# 2. §3: TTL — HIT ở t=600s, MISS ở t=3600s, `stale_evictions ≥ 1`.
+# 2. §3: TTL — HIT ở t=600s, MISS ở t=4200s (advance cộng dồn), `stale_evictions ≥ 1`.
 # 3. §4: output cho thấy GLOBEX đọc được câu trả lời của ACME khi `namespaced=False`,
 #    và MISS khi `namespaced=True`.
 #
@@ -190,3 +192,26 @@ print("\nnamespaced=True  → GLOBEX nhận được:", blocked.answer if blocke
 # ground truth mà chỉ bạn mới có (ở đây là `topic`). Một cache 95% hit rate nghe
 # tuyệt vời cho tới khi bạn biết một phần ba số hit đó là câu trả lời của câu hỏi
 # khác. Luôn báo cáo hai cột cạnh nhau.
+
+# %% [markdown]
+# ## Chọn ngưỡng dựa trên probe set
+# Đây là mô phỏng cache hit, chưa gọi LLM nên cột tiết kiệm là tỷ lệ câu positive
+# có thể tái sử dụng đúng đáp án, không phải chi phí USD đã đo. Cột trả lời sai
+# là false-hit rate trên negative probes; dùng query nguồn làm ground truth.
+# Tỷ lệ 0 trên bộ thử nhỏ không chứng minh mọi câu hỏi thực tế đều an toàn.
+# Namespace lọc owner là điều kiện cần; ứng dụng thật vẫn phải xác thực tenant.
+
+# %%
+safe_rows = [row for row in sweep_rows if row["wrong"] == 0 and row["saved"] >= 0.80]
+assert safe_rows, "No threshold meets this probe-set policy"
+chosen = min(safe_rows, key=lambda row: row["threshold"])
+row_075 = next(row for row in sweep_rows if row["threshold"] == 0.75)
+positive_wrong = sum(score >= chosen["threshold"] and not ok for score, ok in positives)
+print(f"Ngưỡng chọn: {chosen['threshold']:.2f}; tiết kiệm={chosen['saved']:.1%}; "
+      f"false-hit trên negative={chosen['wrong']:.1%}")
+print(f"Ở 0.75: false-hit trên negative={row_075['wrong']:.1%}; vì vậy chưa đủ chặt")
+print(f"Positive probes ghép sai đáp án ở ngưỡng chọn: {positive_wrong}/{len(positives)}")
+assert positive_wrong == 0
+assert stolen is not None and stolen.tenant == "acme"
+assert blocked is None and ttl_cache.stats.stale_evictions >= 1
+print("PASS: threshold policy, TTL expiry and namespace isolation")
